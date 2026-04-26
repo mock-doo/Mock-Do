@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Revision Scheduler Pro</title>
+<!-- Google Fonts: Poppins for Headings, Inter for Body -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===========================
+   DESIGN SYSTEM & VARIABLES
+=========================== */
+:root {
+  --ink:        #0B1437;
+  --ink-light:  #1E2D5F;
+  --blue:       #1A56DB;
+  --blue-mid:   #3F83F8;
+  --blue-pale:  #E1EFFE;
+  --coral:      #F05252;
+  --amber:      #FF8A4C;
+  --green:      #0E9F6E;
+  --bg:         #F3F4F6;
+  --surface:    #FFFFFF;
+  --muted:      #6B7280;
+  --border:     #E5E7EB;
+  --shadow-sm:  0 2px 8px rgba(26, 86, 219, 0.06);
+  --shadow-md:  0 6px 24px rgba(26, 86, 219, 0.1);
+  --shadow-lg:  0 12px 40px rgba(26, 86, 219, 0.15);
+  --r:          16px; 
+  --r-sm:       12px;
+  
+  --font-head: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+  font-family: var(--font-body); background: var(--bg); color: var(--ink);
+  min-height: 100vh; max-width: 480px; margin: 0 auto; position: relative; overflow-x: hidden;
+}
+
+svg { display: block; }
+.screen { display:none; min-height:100vh; flex-direction:column; }
+.screen.active { display:flex; }
+
+/* ===========================
+   HEADER & TOP STATS
+=========================== */
+.header { background: var(--ink); padding: 24px 20px; position: relative; overflow: hidden; }
+.header::before { content: ''; position: absolute; top: -60px; right: -40px; width: 180px; height: 180px; background: var(--blue); border-radius: 50%; opacity: .18; }
+.header::after { content: ''; position: absolute; bottom: -30px; left: 30px; width: 100px; height: 100px; background: var(--blue-mid); border-radius: 50%; opacity: .10; }
+.header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; position: relative; z-index: 1; }
+.app-name { font-family: var(--font-head); font-size: 1.6rem; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px; line-height: 1.1; }
+.app-name span { color: var(--blue-mid); }
+.level-badge {
+  display: inline-block; font-size: 0.6rem; background: linear-gradient(135deg, #FF8A4C, #F05252);
+  color: #fff; padding: 3px 8px; border-radius: 6px; vertical-align: middle; margin-left: 8px;
+  text-transform: uppercase; letter-spacing: 0.5px; font-weight: 800; transform: translateY(-4px);
+  box-shadow: 0 2px 6px rgba(240,82,82,.4);
+}
+
+.header-actions { display:flex; gap:6px; }
+.icon-btn { width: 36px; height: 36px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); border-radius: 12px; color: #3F83F8; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .2s; backdrop-filter: blur(4px); }
+.icon-btn:active { transform: scale(0.95); background: rgba(255,255,255,.15); color: #fff; }
+.icon-btn svg { width: 18px; height: 18px; }
+
+.header-stats { display: flex; gap: 8px; align-items: center; position: relative; z-index: 1; }
+.stat-pill { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.12); border-radius: 30px; padding: 6px 14px; font-size: .8rem; font-weight: 600; color: #E1EFFE; }
+.streak-pill { display: flex; align-items: center; gap: 5px; margin-left: auto; background: linear-gradient(135deg, #1A56DB, #3F83F8); border-radius: 30px; padding: 6px 14px; font-size: .85rem; font-weight: 700; color: #fff; box-shadow: 0 4px 10px rgba(26,86,219,.3); cursor: pointer; transition: transform .2s;}
+.streak-pill:active { transform: scale(0.95); }
+.blue-flame { filter: hue-rotate(210deg) brightness(1.2); font-size: 1rem; }
+
+/* ===========================
+   EXAM BANNER
+=========================== */
+.exam-banner {
+  background: linear-gradient(90deg, #F05252, #FF8A4C); color: #fff; text-align: center;
+  padding: 10px; font-family: var(--font-head); font-size: .8rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 1px; z-index: 5; display: none;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.85; } 100% { opacity: 1; } }
+
+/* ===========================
+   NAVIGATION TABS & CHIPS
+=========================== */
+.nav-wrapper { background: var(--surface); border-radius: 24px 24px 0 0; margin-top: -15px; position: relative; z-index: 2; border-bottom: 1px solid var(--border); display: flex; flex-direction: column; }
+.filter-chips { display: flex; gap: 8px; overflow-x: auto; padding: 16px 20px 6px; scrollbar-width: none; }
+.filter-chips::-webkit-scrollbar { display: none; }
+.chip { padding: 4px 14px; border-radius: 20px; font-family: var(--font-head); font-size: .7rem; font-weight: 700; cursor: pointer; white-space: nowrap; border: 1px solid var(--border); background: transparent; color: var(--muted); transition: all .2s; flex-shrink: 0; }
+.chip.active { background: var(--blue-pale); border-color: var(--blue); color: var(--blue); }
+
+.tabs { display: flex; flex-shrink: 0; }
+.tab-btn { flex: 1; padding: 14px 12px 18px; background: none; border: none; font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; transition: all .2s; letter-spacing: .3px; text-transform: uppercase; }
+.tab-btn.active { color: var(--blue); border-bottom-color: var(--blue); }
+.tab-content { display:none; flex:1; overflow-y:auto; padding:16px 20px 100px; }
+.tab-content.active { display:block; }
+
+/* ===========================
+   RECALL CARDS & ACTIONS (SLEEK)
+=========================== */
+.recall-card { background: var(--surface); border-radius: var(--r); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); border-left: 4px solid var(--blue); cursor: pointer; transition: transform .15s, box-shadow .15s; animation: fadeUp .28s ease; position: relative; }
+.recall-card:active { transform: scale(.98); }
+.recall-card.missed { border-left-color: var(--coral); }
+.recall-card.done-card { border-left-color: var(--green); opacity: .75; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+/* Sleek Action Buttons Layout (Timer & Eye Note) */
+.card-top-actions { position: absolute; top: 14px; right: 14px; display: flex; gap: 6px; z-index: 2; }
+.icon-action-btn { width: 28px; height: 28px; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform .2s; }
+.icon-action-btn:active { transform: scale(0.9); }
+.icon-action-btn svg { width: 15px; height: 15px; }
+.btn-timer { background: var(--blue-pale); color: var(--blue); }
+.btn-note { background: transparent; color: var(--amber); }
+
+.card-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; line-height: 1.3; padding-right: 70px;}
+.card-meta { font-size: .7rem; color: var(--muted); font-weight: 500; margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.card-footer { display:flex; align-items:center; justify-content:space-between; }
+.card-tags { display:flex; gap:8px; align-items:center; }
+
+.hidden-note { display: none; background: #FFFBEB; border-left: 3px solid var(--amber); padding: 8px 10px; margin-bottom: 12px; border-radius: 0 6px 6px 0; font-size: .75rem; color: var(--ink); line-height: 1.4; font-weight: 500; animation: fadeUp .2s ease; }
+
+.itag { border-radius: 6px; padding: 3px 8px; font-family: var(--font-body); font-size: .65rem; font-weight: 800; color: #fff; letter-spacing: .5px; text-transform: uppercase; }
+.itag-cu  { background: #7C3AED; } .itag-d1  { background: var(--blue); } .itag-w1  { background: #0891B2; }
+.itag-m1  { background: var(--green); } .itag-m3  { background: var(--amber); } .itag-m6  { background: var(--coral); }
+.sub-tag { background: var(--bg); color: var(--muted); padding: 2px 8px; border-radius: 6px; font-size: .6rem; font-weight: 800; font-family: var(--font-head); text-transform: uppercase; }
+.progress-badge { font-size: .7rem; font-weight: 600; color: var(--muted); padding: 3px 8px; background: var(--bg); border-radius: 6px; }
+
+.done-btn { border: 2px solid var(--border); border-radius: 30px; padding: 5px 14px; background: none; font-family: var(--font-body); font-size: .75rem; font-weight: 700; color: var(--muted); cursor: pointer; transition: all .18s; }
+.done-btn:hover { border-color: var(--blue); color: var(--blue); }
+.done-btn.marked { border-color: var(--green); color: var(--green); background: #F0FDF8; }
+
+/* ===========================
+   UPCOMING SECTION
+=========================== */
+.upcoming-section { margin-bottom: 24px; }
+.upcoming-hdr { display: flex; align-items: center; gap: 10px; font-family: var(--font-head); font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--ink); margin-bottom: 10px; }
+.upcoming-hdr .line { flex:1; height:2px; background: var(--border); border-radius:2px; }
+.upcoming-badge { background: var(--blue-pale); color: var(--blue); border-radius: 8px; padding: 2px 8px; font-size: .7rem; font-weight: 800; }
+
+.empty { text-align: center; padding: 60px 24px 32px; color: var(--muted); }
+.empty-icon svg { margin: 0 auto 16px; width: 56px; height: 56px; color: var(--blue-mid); }
+.empty-title { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+.empty-sub { font-size: .8rem; font-weight: 500; color: var(--muted); line-height: 1.4; }
+
+/* ===========================
+   FAB 
+=========================== */
+.fab { position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; background: var(--blue); border: none; border-radius: 18px; color: #fff; cursor: pointer; box-shadow: 0 10px 30px rgba(26,86,219,.35); transition: transform .2s cubic-bezier(.34,1.56,.64,1); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.fab:active { transform: scale(.9); }
+.fab svg { width: 24px; height: 24px; stroke-width: 2.5; }
+
+/* ===========================
+   MODALS, SHEETS
+=========================== */
+.overlay { position: fixed; inset: 0; background: rgba(11,20,55,.6); z-index: 100; display: none; align-items: flex-end; justify-content: center; backdrop-filter: blur(3px); }
+.overlay.open { display:flex; }
+.sheet { background: var(--surface); border-radius: 28px 28px 0 0; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding-bottom: 40px; animation: sheetUp .3s cubic-bezier(.22,1,.36,1); }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-handle { width: 44px; height: 5px; background: var(--border); border-radius: 3px; margin: 16px auto 0; }
+.sheet-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px 16px; border-bottom: 1px solid var(--border); }
+.sheet-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 800; color: var(--ink); }
+.sheet-save { background: var(--blue); color: #fff; border: none; border-radius: 12px; padding: 10px 22px; font-family: var(--font-head); font-size: .9rem; font-weight: 700; cursor: pointer; letter-spacing: .3px; transition: background .2s; }
+.sheet-save:active { background: var(--ink-light); }
+.sheet-body { padding: 24px; }
+.fgroup { margin-bottom: 20px; }
+.flabel { display: block; font-family: var(--font-head); font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-light); margin-bottom: 8px; }
+.finput { width: 100%; padding: 14px 16px; border: 2px solid var(--border); border-radius: var(--r-sm); font-family: var(--font-body); font-size: 1rem; font-weight: 500; color: var(--ink); background: var(--bg); transition: all .2s; outline: none; }
+.finput:focus { border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px var(--blue-pale); }
+
+.sched-hdr { font-family: var(--font-head); font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--ink-light); margin-bottom: 14px; margin-top: 8px; }
+.sched-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
+.sched-left { display:flex; align-items:center; gap:14px; }
+.sched-lbl { font-size: .95rem; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
+.sched-sub { font-size: .75rem; color: var(--muted); font-weight: 500; }
+.toggle { width: 50px; height: 28px; background: var(--border); border-radius: 14px; position: relative; cursor: pointer; border: none; flex-shrink: 0; transition: background .25s; }
+.toggle.on { background: var(--blue); }
+.toggle::after { content: ''; position: absolute; width: 22px; height: 22px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: left .25s cubic-bezier(.34,1.56,.64,1); box-shadow: 0 2px 5px rgba(0,0,0,.2); }
+.toggle.on::after { left: 25px; }
+
+/* Center Overlay Modals */
+.modal-overlay { position: fixed; inset: 0; background: rgba(11,20,55,.7); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--surface); border-radius: 24px; padding: 32px 24px; margin: 20px; max-width: 340px; width: 100%; text-align: center; animation: popIn .25s cubic-bezier(.34,1.56,.64,1); position: relative; overflow: hidden;}
+@keyframes popIn { from { transform: scale(.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-icon { width:56px; height:56px; margin:0 auto 16px; border-radius:16px; display:flex; align-items:center; justify-content:center; }
+.modal-title { font-family: var(--font-head); font-size: 1.25rem; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+.modal-txt { font-size: .9rem; color: var(--muted); font-weight: 500; line-height: 1.5; margin-bottom: 24px; }
+.modal-btns { display:flex; gap:12px; }
+.mbtn { flex:1; padding: 14px; border-radius: 12px; border: none; font-family: var(--font-head); font-size: .9rem; font-weight: 700; cursor: pointer; transition: opacity .18s; letter-spacing: .3px; }
+.mbtn:active { opacity: .8; }
+.mbtn-cancel { background: var(--border); color: var(--ink); }
+.mbtn-danger { background: var(--coral); color: #fff; }
+
+/* Confidence Buttons */
+.btn-hard { background:#FEF2F2; color:#E02424; margin-bottom:10px; width:100%; display:block; border:1px solid rgba(224,36,36,.2); }
+.btn-mod  { background:#E1EFFE; color:#1C64F2; margin-bottom:10px; width:100%; display:block; border:1px solid rgba(28,100,242,.2); }
+.btn-easy { background:#F0FDF4; color:#0E9F6E; margin-bottom:10px; width:100%; display:block; border:1px solid rgba(14,159,110,.2); }
+
+/* AMBIENT SCREEN TIMER */
+.ambient-screen { position: fixed; inset: 0; background: #050914; color: rgba(255,255,255,0.9); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+.ambient-screen.active { display: flex; animation: ambientIn 1s ease; }
+@keyframes ambientIn { from { opacity: 0; } to { opacity: 1; } }
+.ambient-title { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; margin-bottom: 30px; opacity: 0.6; text-transform: uppercase; letter-spacing: 2px; text-align: center; padding: 0 20px;}
+.ambient-time { font-family: var(--font-head); font-size: 6rem; font-weight: 900; letter-spacing: -2px; margin-bottom: 40px; text-shadow: 0 0 40px rgba(26,86,219,.4); }
+.ambient-actions { display: none; gap: 15px; width: 100%; max-width: 300px; padding: 0 20px;}
+.ambient-actions.show { display: flex; }
+.ambient-btn { flex: 1; padding: 16px; border-radius: 16px; border: none; font-family: var(--font-head); font-size: 1rem; font-weight: 800; cursor: pointer; }
+.abtn-add { background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+.abtn-done { background: var(--blue-mid); color: #fff; box-shadow: 0 10px 20px rgba(26,86,219,.4); }
+.ambient-cancel { position: absolute; top: 40px; right: 30px; background: none; border: none; color: rgba(255,255,255,.4); font-size: 1rem; cursor: pointer; font-family: var(--font-head); }
+
+/* SPOTIFY WRAPPED STYLE (Share, Streak, & Tutorial) */
+.wrapped-card {
+  position: relative; width: 100%; max-width: 320px;
+  background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
+  border-radius: 32px; padding: 40px 30px; margin: 20px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.5), inset 0 1px 2px rgba(255,255,255,.3);
+  text-align: left; overflow: hidden; animation: popIn .4s cubic-bezier(.34,1.56,.64,1); color: #fff;
+}
+.wrapped-card.blue-theme { background: linear-gradient(135deg, #1A2980 0%, #26D0CE 100%); }
+.wrapped-card.streak-theme { background: linear-gradient(135deg, #111827 0%, #4F46E5 100%); box-shadow: 0 20px 50px rgba(79,70,229,.5), inset 0 1px 2px rgba(255,255,255,.2);}
+.wc-bg-pattern { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,.1) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.3; transform: rotate(15deg); z-index: 0; pointer-events: none;}
+.wc-content { position: relative; z-index: 1; }
+
+.wc-header { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; opacity: .8; margin-bottom: 8px;}
+.wc-title { font-family: var(--font-head); font-size: 2.2rem; font-weight: 900; line-height: 1.1; margin-bottom: 30px; text-shadow: 0 4px 10px rgba(0,0,0,.2);}
+.wc-stat-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,.2); padding-bottom: 15px;}
+.wc-val { font-family: var(--font-head); font-size: 2rem; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.wc-lbl { font-size: .7rem; font-weight: 600; opacity: .8; text-transform: uppercase; letter-spacing: 1px;}
+.wc-footer { margin-top: 30px; font-size: .7rem; font-weight: 600; opacity: .6; text-align: center; }
+
+/* Tutorial Modal Specific (Pure Hindi & Visuals) */
+.tut-slide { display: none; text-align: center; animation: fadeUp .3s ease; }
+.tut-slide.active { display: block; }
+.tut-visual { font-size: 5rem; margin-bottom: 20px; text-shadow: 0 10px 20px rgba(0,0,0,.3); line-height: 1; }
+.tut-head { font-family: var(--font-head); font-size: 1.8rem; font-weight: 900; margin-bottom: 12px; line-height: 1.2; text-shadow: 0 2px 5px rgba(0,0,0,.2); }
+.tut-text { font-size: .95rem; font-weight: 600; opacity: 0.95; line-height: 1.6; }
+.tut-dots { display: flex; justify-content: center; gap: 8px; margin: 30px 0 20px; }
+.tut-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.3); transition: .2s; }
+.tut-dot.active { background: #fff; width: 24px; border-radius: 10px; }
+
+/* ===========================
+   INNER SCREENS
+=========================== */
+.inner-header { background: var(--ink); padding: 20px 24px; position: relative; overflow: hidden; }
+.inner-header::before { content: ''; position: absolute; top: -50px; right: -30px; width: 140px; height: 140px; background: var(--blue); border-radius: 50%; opacity: .15; }
+.back-row { display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+.back-btn { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.2); border-radius: 12px; padding: 8px 14px; color: #fff; display: inline-flex; align-items: center; justify-content: center; gap: 6px; font-family: var(--font-head); font-size: .85rem; font-weight: 700; cursor: pointer; transition: all .2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+.back-btn:active { transform: scale(0.95); background: rgba(255,255,255,.25); }
+.back-btn svg { width:18px; height:18px; }
+.inner-title { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; color: #fff; margin-top: 16px; position: relative; z-index: 1; }
+.perf-body, .hmap-body, .settings-body, .detail-body, .search-content { flex:1; overflow-y:auto; padding:20px; }
+
+/* PERFORMANCE & HEATMAP */
+.perf-hero { background: var(--surface); border-radius: var(--r); padding: 24px; display: flex; align-items: center; gap: 30px; box-shadow: var(--shadow-md); margin-bottom: 20px; }
+.perf-ring { width: 90px; height: 90px; border-radius: 50%; border: 8px solid var(--blue); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.perf-ring-pct { font-family: var(--font-head); font-size: 1.6rem; font-weight: 900; color: var(--blue); letter-spacing: -0.5px;}
+.perf-rows { flex:1; display:flex; flex-direction:column; gap:12px; }
+.perf-row { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; }
+.prl { color: var(--muted); font-weight: 500; display:flex; align-items:center; gap:8px; }
+.prl svg { width:16px; height:16px; color: var(--blue-mid); } 
+.prv { font-weight: 800; color: var(--ink); font-family: var(--font-head); font-size: 1.05rem; }
+.prv.green  { color: var(--green); } .prv.red    { color: var(--coral); }
+.icon-total { color: var(--blue-mid); } .icon-done { color: var(--green); } .icon-pend { color: var(--blue-mid); } .icon-miss { color: var(--coral); }
+
+.int-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; margin-bottom:20px; }
+.int-card { background: var(--surface); border-radius: 14px; padding: 14px 10px; box-shadow: 0 4px 15px rgba(0,0,0,.03); border: 1px solid var(--border); border-top: 4px solid var(--blue); }
+.int-card-lbl { font-family: var(--font-head); font-size: .8rem; font-weight: 800; color: var(--ink); margin-bottom: 12px; }
+.int-stat { display:flex; justify-content:space-between; font-size: .7rem; margin-bottom: 6px; }
+.ist-l { color: var(--muted); font-weight: 500; } .ist-v { font-weight: 800; font-family: var(--font-head); }
+.ist-v.g { color: var(--green); } .ist-v.a { color: var(--amber); } .ist-v.r { color: var(--coral); }
+.int-bar { height: 4px; background: var(--bg); border-radius: 2px; margin-top: 12px; overflow: hidden; }
+.int-bar-fill { height: 100%; background: var(--border); border-radius: 2px; transition: width .5s; }
+
+.heatmap-nav-btn { width: 100%; padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--ink); cursor: pointer; box-shadow: var(--shadow-sm); display: flex; align-items: center; justify-content: space-between; letter-spacing: .2px; margin-top: 10px; }
+.heatmap-nav-btn:active { transform: scale(.98); }
+
+.hmap-filter { display: flex; gap: 8px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.hmap-filter::-webkit-scrollbar { display:none; }
+.hmap-fbtn { padding: 6px 16px; border-radius: 20px; border: 2px solid var(--border); background: var(--surface); font-family: var(--font-head); font-size: .8rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all .2s; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+.hmap-fbtn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+.hmap-legend { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; font-size: .75rem; color: var(--muted); font-weight: 600; }
+.legend-row { display:flex; gap:4px; } .lbox { width: 16px; height: 16px; border-radius: 4px; }
+.hmap-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 10px;}
+.hday-hdr { font-family: var(--font-head); font-size: .65rem; font-weight: 800; color: var(--muted); text-align: center; padding: 4px 0; text-transform: uppercase; }
+.hcell { aspect-ratio: 1; border-radius: 6px; background: var(--border); transition: transform .15s; cursor: default; position: relative; }
+.hcell:hover { transform: scale(1.15); z-index: 2; box-shadow: var(--shadow-sm); }
+.hcell span { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size: .6rem; color: rgba(0,0,0,.3); font-weight: 700; font-family: var(--font-head); }
+.h0 { background: #E5E7EB; } .h1 { background: #C3DDFD; } .h2 { background: #76A9FA; } .h3 { background: #3F83F8; } .h4 { background: #1C64F2; } .h5 { background: #1E429F; }
+
+/* SETTINGS & DETAILS */
+.sgroup-label { font-family: var(--font-head); font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; margin-top: 24px; padding-left: 6px; }
+.sgroup-label:first-child { margin-top: 0; }
+.sitem { background: var(--surface); border-radius: var(--r-sm); padding: 18px; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: var(--shadow-sm); transition: transform .15s; border: 1px solid transparent; }
+.sitem:active { transform: scale(.98); border-color: var(--blue-pale); }
+.sitem-left { display:flex; align-items:center; gap:16px; }
+.sitem-icon { width: 42px; height: 42px; background: var(--blue-pale); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: var(--blue-icon); }
+.sitem-icon svg { width: 22px; height: 22px; stroke-width: 2.2; }
+.sitem-lbl { font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--ink); }
+.sitem-arr svg { width:20px; height:20px; color: var(--muted); }
+.time-input-inline { border: 2px solid var(--blue); border-radius: 8px; padding: 6px 12px; font-family: var(--font-head); font-size: .9rem; font-weight: 700; color: var(--blue); background: var(--blue-pale); outline: none; cursor: pointer; width: 120px; }
+
+.detail-h { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--ink); margin-bottom: 8px; line-height: 1.3;}
+.detail-note { font-size: .9rem; color: var(--muted); font-weight: 500; margin-bottom: 12px; line-height: 1.6; background: #fff; padding: 12px; border-radius: 12px; border: 1px solid var(--border); }
+.detail-link { display:inline-flex; align-items:center; gap:6px; font-size: .85rem; font-weight: 700; color: var(--blue); text-decoration: none; margin-bottom:12px; background: var(--blue-pale); padding: 8px 14px; border-radius: 8px;}
+.sched-card { background: var(--surface); border-radius: var(--r); padding: 20px; margin-top: 20px; box-shadow: var(--shadow-md); border: 1px solid var(--border); }
+.sched-card-hdr { display:flex; justify-content:space-between; align-items:center; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 2px solid var(--bg); }
+.sched-card-title { font-family:var(--font-head); font-size: 1rem; font-weight: 800; color: var(--ink); }
+.sched-card-date { font-size: .75rem; color: var(--muted); font-weight: 600; }
+.sched-item { display:flex; align-items:center; justify-content:space-between; padding: 14px 0; border-bottom: 1px dashed var(--border); }
+.sched-item:last-child { border-bottom: none; }
+.sched-item-left { display:flex; align-items:center; gap:12px; }
+.sched-date-edit-wrap { display: flex; align-items: center; gap: 8px; position: relative; }
+.sched-date-txt { font-family: var(--font-head); font-size: .95rem; font-weight: 700; color: var(--ink); cursor:pointer; display:flex; align-items:center; gap:6px;}
+.sched-date-txt:hover { color: var(--blue); }
+.edit-icon-tiny { width:14px; height:14px; color:var(--muted); }
+.hidden-date-picker { position:absolute; left:0; top:0; width:100%; height:100%; opacity:0; cursor:pointer; }
+.sched-days-txt { font-size: .75rem; font-weight: 600; color: var(--muted); margin-top:2px; }
+.sched-icon { display:flex; align-items:center; gap:6px; font-family: var(--font-head); font-size: .8rem; font-weight: 800; padding:4px 10px; border-radius:8px; }
+.icon-success { background:#F0FDF4; color:var(--green); } .icon-danger { background:#FEF2F2; color:var(--coral); } .icon-primary { background:var(--blue-pale); color:var(--blue); } .icon-muted { background:var(--bg); color:var(--muted); }
+
+/* SEARCH & TOAST */
+.search-hdr { background: var(--ink); padding: 20px 24px; }
+.search-bar { display: flex; align-items: center; gap: 12px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15); border-radius: 14px; padding: 12px 16px; }
+.search-bar svg { width: 20px; height: 20px; color: rgba(255,255,255,.7); stroke-width: 2.5; }
+.search-bar input { flex:1; background: none; border: none; color: #fff; font-family: var(--font-body); font-size: 1rem; font-weight: 500; outline: none; }
+.search-bar input::placeholder { color: rgba(255,255,255,.5); }
+.search-cancel { background: none; border: none; color: #fff; font-family: var(--font-head); font-size: .85rem; font-weight: 700; cursor: pointer; padding: 4px; }
+.search-content { flex:1; overflow-y:auto; padding:20px; }
+
+.toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--ink); color: #fff; border-radius: 14px; padding: 14px 24px; font-family: var(--font-head); font-size: .85rem; font-weight: 700; z-index: 500; transition: transform .3s cubic-bezier(.34,1.56,.64,1); white-space: nowrap; box-shadow: var(--shadow-lg); letter-spacing: .3px; display: flex; align-items: center; gap: 10px; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast svg { width: 18px; height: 18px; color: var(--green); }
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ========== ICONS ========== -->
+<svg style="display:none;">
+  <symbol id="icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></symbol>
+  <symbol id="icon-stat" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"></path><path d="M12 20V4"></path><path d="M6 20V14"></path></symbol>
+  
+  <symbol id="icon-set" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  </symbol>
+
+  <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></symbol>
+  <symbol id="icon-help" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></symbol>
+  <symbol id="icon-flame" viewBox="0 0 24 24" fill="currentColor"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></symbol>
+  <symbol id="icon-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></symbol>
+  <symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></symbol>
+  <symbol id="icon-msg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></symbol>
+  <symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></symbol>
+  <symbol id="icon-bell" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></symbol>
+  <symbol id="icon-timer" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 10"></polyline><line x1="12" y1="2" x2="12" y2="4"></line></symbol>
+  <symbol id="icon-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></symbol>
+  <symbol id="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></symbol>
+  <symbol id="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></symbol>
+
+  <!-- Performance Icons -->
+  <symbol id="icon-total" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></symbol>
+  <symbol id="icon-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></symbol>
+  <symbol id="icon-pend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></symbol>
+  <symbol id="icon-miss" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></symbol>
+</svg>
+
+<!-- ========== HOME SCREEN ========== -->
+<div id="homeScreen" class="screen active">
+  <div class="header">
+    <div class="header-top">
+      <div class="app-name">Revision<br><span>Scheduler</span> <span class="level-badge" id="headerLevelBadge">Beginner</span></div>
+      <div class="header-actions">
+        <button class="icon-btn" onclick="openTutorial()"><svg><use href="#icon-help"></use></svg></button>
+        <button class="icon-btn" onclick="openShareModal()"><svg><use href="#icon-share"></use></svg></button>
+        <button class="icon-btn" onclick="openSearch()"><svg><use href="#icon-search"></use></svg></button>
+        <button class="icon-btn" onclick="go('settingsScreen')"><svg><use href="#icon-set"></use></svg></button>
+      </div>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill" id="todayPill">🎯 0</div>
+      <div class="stat-pill" style="color:#FCA5A5; border-color:rgba(252,165,165,.2);" id="missedPill">😓 0</div>
+      <div class="streak-pill" id="streakPill" onclick="openStreakModal()">
+        <span class="blue-flame"><svg width="16" height="16" style="display:inline; margin-bottom:-2px;"><use href="#icon-flame"></use></svg></span> &nbsp;<span id="streakText">0</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="examBanner" class="exam-banner">🚨 Exam Mode Active: <span id="examDaysSpan"></span> Days Left!</div>
+
+  <div class="nav-wrapper">
+    <div class="filter-chips" id="subjectFilterBar"></div>
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-today" onclick="switchTab('today')">Today</button>
+      <button class="tab-btn" id="tab-upcoming" onclick="switchTab('upcoming')">Upcoming</button>
+    </div>
+  </div>
+
+  <div id="tab-today-content" class="tab-content active">
+    <div id="todayList"></div>
+  </div>
+  <div id="tab-upcoming-content" class="tab-content">
+    <div id="upcomingList"></div>
+  </div>
+
+  <button class="fab" onclick="openAdd()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+  </button>
+</div>
+
+<!-- ========== PERFORMANCE SCREEN ========== -->
+<div id="perfScreen" class="screen">
+  <div class="inner-header">
+    <div class="back-row"><button class="back-btn" onclick="go('settingsScreen')"><svg><use href="#icon-back"></use></svg> Back</button></div>
+    <div class="inner-title">Performance</div>
+  </div>
+  <div class="perf-body">
+    <div class="perf-hero">
+      <div class="perf-ring"><div class="perf-ring-pct" id="perfPct">100%</div></div>
+      <div class="perf-rows">
+        <div class="perf-row"><span class="prl"><svg class="icon-total"><use href="#icon-total"></use></svg> Total</span><span class="prv" id="pTotal">0</span></div>
+        <div class="perf-row"><span class="prl"><svg class="icon-done"><use href="#icon-done"></use></svg> Done</span><span class="prv green" id="pDone">0</span></div>
+        <div class="perf-row"><span class="prl"><svg class="icon-pend"><use href="#icon-pend"></use></svg> Pending</span><span class="prv" id="pPend">0</span></div>
+        <div class="perf-row"><span class="prl"><svg class="icon-miss"><use href="#icon-miss"></use></svg> Missed</span><span class="prv red" id="pMiss">0</span></div>
+      </div>
+    </div>
+    <div class="int-grid" id="intGrid"></div>
+    <button class="heatmap-nav-btn" onclick="go('heatmapScreen')">
+      <span>Calendar Heatmap</span><span style="font-weight:900; color:var(--blue);">&#8594;</span>
+    </button>
+  </div>
+</div>
+
+<!-- ========== HEATMAP SCREEN ========== -->
+<div id="heatmapScreen" class="screen">
+  <div class="inner-header">
+    <div class="back-row"><button class="back-btn" onclick="go('perfScreen')"><svg><use href="#icon-back"></use></svg> Back</button></div>
+    <div class="inner-title">Calendar Heatmap</div>
+  </div>
+  <div class="hmap-body">
+    <div class="hmap-filter" id="hmapFilter">
+      <button class="hmap-fbtn active" onclick="hmapFilter('all',this)">All</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('cu',this)">CU</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('d1',this)">D1</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('w1',this)">W1</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('m1',this)">M1</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('m3',this)">M3</button>
+      <button class="hmap-fbtn" onclick="hmapFilter('m6',this)">M6</button>
+    </div>
+    <div class="hmap-legend"><span>Less</span><div class="legend-row"><div class="lbox h0"></div><div class="lbox h1"></div><div class="lbox h2"></div><div class="lbox h3"></div><div class="lbox h4"></div><div class="lbox h5"></div></div><span>More</span></div>
+    <div class="hmap-grid" id="hmapGrid"></div>
+  </div>
+</div>
+
+<!-- ========== SETTINGS SCREEN ========== -->
+<div id="settingsScreen" class="screen">
+  <div class="inner-header"><div class="back-row"><button class="back-btn" onclick="go('homeScreen')"><svg><use href="#icon-back"></use></svg> Back</button></div><div class="inner-title">Settings</div></div>
+  <div class="settings-body">
+    
+    <div class="sgroup-label">Performance & Stats</div>
+    <div class="sitem" onclick="go('perfScreen')">
+      <div class="sitem-left">
+        <div class="sitem-icon"><svg><use href="#icon-stat"></use></svg></div>
+        <div><div class="sitem-lbl">My Performance</div><div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:4px">View Heatmap & Targets</div></div>
+      </div>
+      <span class="sitem-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+    </div>
+
+    <div class="sgroup-label">Notifications & Exam</div>
+    <div class="sitem" style="cursor:default">
+      <div class="sitem-left"><div class="sitem-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div><div><div class="sitem-lbl">Daily Reminder</div><div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:4px">Is waqt notification aayegi</div></div></div>
+      <div class="time-edit-wrap"><input type="time" class="time-input-inline" id="dailyTimeInput" onchange="saveDailyTime(this.value)"></div>
+    </div>
+    <div class="sitem" style="cursor:default">
+      <div class="sitem-left"><div class="sitem-icon" style="background:#FEF2F2;color:#E02424"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg></div><div><div class="sitem-lbl">Target Exam Date</div><div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:4px">Activates 5-Day Exam Mode</div></div></div>
+      <div class="time-edit-wrap"><input type="date" class="time-input-inline" id="examDateInput" onchange="saveExamDate(this.value)"></div>
+    </div>
+    <div class="sitem" onclick="requestNotificationPerm()">
+      <div class="sitem-left"><div class="sitem-icon" style="background:#E1EFFE;color:#1C64F2"><svg><use href="#icon-bell"></use></svg></div><div><div class="sitem-lbl">Turn On Notifications</div><div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:2px">Browser alerts on karein</div></div></div>
+      <span class="sitem-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+    </div>
+
+    <div class="sgroup-label">Share & Community</div>
+    <div class="sitem" onclick="copySourceCode()">
+      <div class="sitem-left">
+        <div class="sitem-icon" style="background:var(--blue-pale); color:var(--blue);"><svg><use href="#icon-copy"></use></svg></div>
+        <div><div class="sitem-lbl">Copy App Source Code</div><div style="font-size:.75rem;color:var(--muted);font-weight:500;margin-top:4px">Share this app with friends</div></div>
+      </div>
+      <span class="sitem-arr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></span>
+    </div>
+
+    <div class="sgroup-label">Advice to the editor</div>
+    <div style="background:var(--surface); border-radius:var(--r-sm); padding:16px; box-shadow:var(--shadow-sm); border: 1px solid var(--border);">
+      <div style="font-family:var(--font-head); font-size:.85rem; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; color:var(--ink);"><svg width="18" height="18" style="color:var(--blue-mid);"><use href="#icon-msg"></use></svg> App mein kya sudhar karein?</div>
+      <textarea id="feedbackInput" class="finput" rows="3" placeholder="Apni salah yahan likhein..." style="padding:12px; font-size:.85rem; margin-bottom:12px;"></textarea>
+      <button onclick="sendFeedback()" style="width:100%; background:var(--blue-pale); color:var(--blue); border:none; padding:12px; border-radius:10px; font-family:var(--font-head); font-size:.85rem; font-weight:700; cursor:pointer; transition:background .2s;">Send Advice</button>
+    </div>
+
+    <div class="sgroup-label">Data Management</div>
+    <div class="sitem" onclick="doExport()"><div class="sitem-left"><div class="sitem-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></div><span class="sitem-lbl">Export Backup</span></div></div>
+    <div class="sitem" onclick="openClearConfirm()"><div class="sitem-left"><div class="sitem-icon" style="background:#FDE8E8;color:#E02424"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></div><span class="sitem-lbl" style="color:#E02424">Clear All Data</span></div></div>
+    <div style="text-align:center; color:var(--muted); font-size:.8rem; margin-top:30px; font-weight:600; line-height:1.6;">Revision Scheduler Pro v2.0 <br><span style="font-size: .8rem; font-weight: 800; color: var(--blue);">Made by @shivansh.panditt</span></div>
+  </div>
+</div>
+
+<!-- ========== DETAIL SCREEN ========== -->
+<div id="detailScreen" class="screen">
+  <div class="inner-header"><div class="back-row"><button class="back-btn" onclick="go('homeScreen')"><svg><use href="#icon-back"></use></svg> Back</button><button onclick="triggerDeleteFromDetail()" style="background:rgba(240,82,82,.2);border:none;border-radius:10px;padding:8px 16px;color:#F98080;font-family:var(--font-head);font-size:.85rem;font-weight:700;cursor:pointer;">Delete</button></div><div class="inner-title">Details</div></div>
+  <div class="detail-body" id="detailBody"></div>
+</div>
+
+<!-- ========== SEARCH SCREEN ========== -->
+<div id="searchScreen" class="screen">
+  <div class="search-hdr"><div class="search-bar"><svg><use href="#icon-search"></use></svg><input type="text" id="searchInput" placeholder="Topic ka naam khojein..." oninput="doSearch(this.value)"><button class="search-cancel" onclick="go('homeScreen')">Cancel</button></div></div>
+  <div class="search-content" id="searchContent"></div>
+</div>
+
+<!-- ========== ADD SHEET ========== -->
+<div class="overlay" id="addOverlay" onclick="overlayClick(event,'addOverlay')">
+  <div class="sheet">
+    <div class="sheet-handle"></div><div class="sheet-hdr"><span class="sheet-title">Add New Topic</span><button class="sheet-save" onclick="saveRecall()">Save</button></div>
+    <div class="sheet-body">
+      <div class="fgroup"><label class="flabel">Title *</label><input type="text" class="finput" id="addTitle" placeholder="Topic ka naam likhein..."></div>
+      <div class="fgroup"><label class="flabel">Subject (Optional)</label><input type="text" class="finput" id="addSubject" placeholder="Physics, History..."></div>
+      <div class="fgroup"><label class="flabel">Short Note / Trick (Max 100 words)</label><textarea class="finput" id="addNote" rows="3" placeholder="Yahan koi short trick ya formula likhein. Active recall ke liye yeh hidden rahega..."></textarea></div>
+      <div class="fgroup"><label class="flabel">Link (Optional)</label><input type="url" class="finput" id="addLink" placeholder="https://..."></div>
+
+      <div class="sched-hdr">Smart Spaced Schedule</div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-cu">CU</span><div><div class="sched-lbl">Today</div><div class="sched-sub">Aaj hi revise karein</div></div></div><button class="toggle on" id="tog-cu" onclick="toggleSched('cu',this)"></button></div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-d1">D1</span><div><div class="sched-lbl">Tomorrow</div><div class="sched-sub">1 din baad revise</div></div></div><button class="toggle on" id="tog-d1" onclick="toggleSched('d1',this)"></button></div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-w1">W1</span><div><div class="sched-lbl">Next Week</div><div class="sched-sub">7 din baad revise</div></div></div><button class="toggle on" id="tog-w1" onclick="toggleSched('w1',this)"></button></div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-m1">M1</span><div><div class="sched-lbl">1 Month</div><div class="sched-sub">30 din baad revise</div></div></div><button class="toggle on" id="tog-m1" onclick="toggleSched('m1',this)"></button></div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-m3">M3</span><div><div class="sched-lbl">3 Months</div><div class="sched-sub">91 din baad revise</div></div></div><button class="toggle on" id="tog-m3" onclick="toggleSched('m3',this)"></button></div>
+      <div class="sched-row"><div class="sched-left"><span class="itag itag-m6">M6</span><div><div class="sched-lbl">6 Months</div><div class="sched-sub">183 din baad revise</div></div></div><button class="toggle on" id="tog-m6" onclick="toggleSched('m6',this)"></button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== MODALS ========== -->
+<div class="modal-overlay" id="clearModal">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:#FDE8E8;color:#E02424"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg></div>
+    <div class="modal-title" style="color:var(--coral);">Sab Delete Karein?</div>
+    <div class="modal-txt">Yeh action undo nahi ho सकता। साफ़ करने के बाद डेटा वापस नहीं मिलेगा।</div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="closeModal('clearModal')">Cancel</button>
+      <button class="mbtn mbtn-danger" onclick="clearAll()">Delete All</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE TOPIC CONFIRMATION MODAL -->
+<div class="modal-overlay" id="deleteTopicModal">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:#FDE8E8;color:#E02424"><svg><use href="#icon-trash"></use></svg></div>
+    <div class="modal-title" style="color:var(--coral);">हमेशा के लिए डिलीट?</div>
+    <div class="modal-txt">क्या आप इस टॉपिक को डिलीट करना चाहते हैं? यह होम, अपकमिंग और हीटमैप से हमेशा के लिए हट जाएगा।</div>
+    <div class="modal-btns">
+      <button class="mbtn mbtn-cancel" onclick="closeModal('deleteTopicModal')">Cancel</button>
+      <button class="mbtn mbtn-danger" onclick="executeDeleteTopic()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIDENCE MODAL (3 Buttons) -->
+<div class="modal-overlay" id="confidenceModal">
+  <div class="modal-box">
+    <div class="modal-title">Kaisa laga yeh topic?</div>
+    <div class="modal-txt">Apni memory ke hisaab se rating dein:</div>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="mbtn btn-hard" onclick="submitConfidence('hard')">🔴 Hard (अगले 3 दिन लगातार)</button>
+      <button class="mbtn btn-mod" onclick="submitConfidence('moderate')">🔵 Moderate (नॉर्मल D1, W1...)</button>
+      <button class="mbtn btn-easy" onclick="submitConfidence('easy')">🟢 Easy (रिवीजन समाप्त)</button>
+    </div>
+    <button class="mbtn mbtn-cancel" style="margin-top:15px; width:100%" onclick="closeModal('confidenceModal')">Cancel</button>
+  </div>
+</div>
+
+<!-- PRETTY STREAK CARD (Spotify Premium Style) -->
+<div class="modal-overlay" id="streakModal" onclick="overlayClick(event,'streakModal')">
+  <div class="wrapped-card streak-theme" id="streakCardUI">
+    <div class="wc-bg-pattern"></div>
+    <div class="wc-content">
+      <div class="wc-header">Level System</div>
+      <div class="wc-title" id="gcLevelName" style="font-size: 2.5rem;">Beginner</div>
+      
+      <div class="wc-stat-row">
+        <div><div class="wc-val" id="gcStreak">0</div><div class="wc-lbl">Current Streak</div></div>
+        <div style="font-size:2rem;" class="blue-flame">🔥</div>
+      </div>
+      <div class="wc-stat-row" style="border:none; margin-bottom:10px;">
+        <div><div class="wc-val" id="gcFreezes">5/5</div><div class="wc-lbl">Freezes Left</div></div>
+        <div style="font-size:2rem;">❄️</div>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <div style="display:flex; justify-content:space-between; font-size:.75rem; font-weight:600; margin-bottom:8px;">
+          <span id="gcProgText">0 / 10 Days</span> <span id="gcNextLevel" style="opacity:0.7;">to Intermediate</span>
+        </div>
+        <div style="height:6px; background:rgba(0,0,0,.4); border-radius:4px; overflow:hidden;">
+          <div id="gcProgFill" style="height:100%; background:#fff; width:0%; transition: width 1s;"></div>
+        </div>
+      </div>
+      
+      <div id="gcPenaltyAlert" style="display:none; margin-top: 20px; background: rgba(240,82,82,.2); border: 1px solid rgba(240,82,82,.4); color: #FFF; font-size: .75rem; font-weight: 600; padding: 12px; border-radius: 12px; backdrop-filter: blur(5px);">
+        ⚠️ Penalty Pause active until <span id="gcPenaltyDate"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE WRAPPED MODAL -->
+<div class="modal-overlay" id="shareModal" onclick="overlayClick(event,'shareModal')">
+  <div class="wrapped-card blue-theme" id="wrappedCardUI">
+    <div class="wc-bg-pattern"></div>
+    <div class="wc-content">
+      <div class="wc-header">My Revision Wrapped</div>
+      <div class="wc-title" id="wcTitle">Unstoppable!</div>
+      
+      <div class="wc-stat-row">
+        <div><div class="wc-val" id="wcLevelVal">Pro</div><div class="wc-lbl">Current Level</div></div>
+        <div style="font-size:2rem;">🌟</div>
+      </div>
+      <div class="wc-stat-row">
+        <div><div class="wc-val" id="wcStreakVal">12 Days</div><div class="wc-lbl">Active Streak</div></div>
+        <div style="font-size:2rem;" class="blue-flame">🔥</div>
+      </div>
+      <div class="wc-stat-row" style="border:none; margin-bottom:0;">
+        <div><div class="wc-val" id="wcDoneVal">5</div><div class="wc-lbl">Topics Crushed Today</div></div>
+        <div style="font-size:2rem;">🎯</div>
+      </div>
+      
+      <div class="wc-footer">Screenshot this & Share on Instagram! 📸<br>Revision Scheduler Pro</div>
+    </div>
+  </div>
+  <button class="mbtn" style="position:absolute; bottom:40px; width:280px; background:var(--surface); color:var(--ink); box-shadow:0 10px 30px rgba(0,0,0,.5);" onclick="shareText()">Share Status via App 🚀</button>
+</div>
+
+<!-- WELCOME TUTORIAL MODAL (Spotify Style Pure Hindi) -->
+<div class="modal-overlay" id="tutorialModal">
+  <div class="wrapped-card" style="margin: 0; max-width: 340px; padding: 30px 20px;">
+    <div class="wc-bg-pattern"></div>
+    <div class="wc-content" style="text-align:center;">
+      
+      <!-- Slide 1 -->
+      <div class="tut-slide active" id="tut-1">
+        <div class="tut-visual">🚀</div>
+        <div class="tut-head">स्मार्ट पार्टनर</div>
+        <div class="tut-text">यह कोई साधारण लिस्ट नहीं है।<br>यह 'Spaced Repetition' एल्गोरिदम से आपको पूरा सिलेबस पक्का याद कराएगा।</div>
+      </div>
+
+      <!-- Slide 2 -->
+      <div class="tut-slide" id="tut-2">
+        <div class="tut-visual">👁️</div>
+        <div class="tut-head">एक्टिव रिकॉल</div>
+        <div class="tut-text">शॉर्ट नोट्स और ट्रिक्स छिपा कर रखें। दिमाग पर ज़ोर डालें और याद आने पर ही '👁️' बटन दबाएं।</div>
+      </div>
+
+      <!-- Slide 3 -->
+      <div class="tut-slide" id="tut-3">
+        <div class="tut-visual" style="font-size:2.5rem; display:flex; flex-direction:column; gap:10px; width:100%;">
+          <span style="background:#FEF2F2; color:#E02424; padding:8px; border-radius:8px; font-weight:700; font-size:.7rem;">🔴 Hard (अगले 3 दिन लगातार)</span>
+          <span style="background:#E1EFFE; color:#1C64F2; padding:8px; border-radius:8px; font-weight:700; font-size:.7rem;">🔵 Moderate (नॉर्मल D1, W1...)</span>
+          <span style="background:#F0FDF4; color:#0E9F6E; padding:8px; border-radius:8px; font-weight:700; font-size:.7rem;">🟢 Easy (रिवीजन समाप्त)</span>
+        </div>
+        <div class="tut-head">स्मार्ट एल्गोरिदम</div>
+        <div class="tut-text">रिवीजन के बाद अपनी रेटिंग चुनें। हमारा सिस्टम आपके लिए अगली तारीख खुद तय कर लेगा।</div>
+      </div>
+
+      <!-- Slide 4 -->
+      <div class="tut-slide" id="tut-4">
+        <div class="tut-visual" style="font-size:3rem; display:flex; justify-content:center; gap:10px;">
+          <span>🔥</span> <span>❄️</span>
+        </div>
+        <div class="tut-head">स्ट्रीक और फ्रीज</div>
+        <div class="tut-text">लगातार पढ़ें और लेवल बढ़ाएं। हर महीने आपको 5 'फ्रीज' मिलेंगे जो छूटने पर आपको पेनल्टी से बचाएंगे।</div>
+      </div>
+
+      <div class="tut-dots">
+        <div class="tut-dot active" id="dot-1"></div>
+        <div class="tut-dot" id="dot-2"></div>
+        <div class="tut-dot" id="dot-3"></div>
+        <div class="tut-dot" id="dot-4"></div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:30px;">
+        <button class="mbtn" style="background:rgba(255,255,255,.2); color:#fff;" id="tutSkipBtn" onclick="closeTutorial()">Skip</button>
+        <button class="mbtn" style="background:#fff; color:#FF4B2B; box-shadow:0 5px 15px rgba(0,0,0,.2);" id="tutNextBtn" onclick="nextTutorialSlide()">Next ➔</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- TIMER MODAL (Select Time) -->
+<div class="modal-overlay" id="timerSelectModal" onclick="overlayClick(event,'timerSelectModal')">
+  <div class="modal-box" style="max-width: 300px;">
+    <div class="modal-title">Focus Timer ⏱️</div>
+    <div class="modal-txt">Kitni der focus karna hai?</div>
+    <div style="display:flex; gap:10px;">
+      <button class="mbtn" style="background:var(--blue-pale); color:var(--blue);" onclick="startAmbientTimer(15)">15 Min</button>
+      <button class="mbtn" style="background:var(--blue); color:#fff;" onclick="startAmbientTimer(30)">30 Min</button>
+    </div>
+  </div>
+</div>
+
+<!-- AMBIENT TIMER SCREEN -->
+<div id="ambientTimer" class="ambient-screen">
+  <button class="ambient-cancel" onclick="cancelTimer()">Cancel ✕</button>
+  <div class="ambient-title" id="ambientTopicTitle">Topic Name</div>
+  <div class="ambient-time" id="ambientTime">15:00</div>
+  
+  <div class="ambient-actions" id="ambientActions">
+    <button class="ambient-btn abtn-add" onclick="addAmbientMins(5)">+5 Min</button>
+    <button class="ambient-btn abtn-done" onclick="finishAmbientDone()">Mark Done ✓</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+  <span id="toastMsg">Success</span>
+</div>
+
+<script>
+/* ========================
+   STATE & SECURITY
+======================== */
+let recalls  = JSON.parse(localStorage.getItem('rs_recalls')  || '[]');
+let settings = JSON.parse(localStorage.getItem('rs_settings') || '{"dailyTime":"09:00","streak":0,"lastDate":"","totalDays":0,"freezes":5,"lastFreezeMonth":"","penaltyUntil":"","examDate":"","seenTutorial":false}');
+
+if (settings.totalDays === undefined) settings.totalDays = 0;
+if (settings.freezes === undefined) settings.freezes = 5;
+if (settings.seenTutorial === undefined) settings.seenTutorial = false;
+
+let activeSched = {cu:true,d1:true,w1:true,m1:true,m3:true,m6:true};
+let currentId   = null;
+let pendingRatingId = null;
+let pendingRatingKey = null;
+let activeSubjectFilter = 'all';
+let targetDeleteId = null;
+
+// Timer State
+let timerInterval = null;
+let timerSeconds = 0;
+let timerTargetId = null;
+let timerTargetKey = null;
+let wakeLock = null;
+
+const DAYS = {cu:0, d1:1, w1:7, m1:30, m3:91, m6:183};
+const LABELS = {cu:'CU', d1:'D1', d2:'D2', d3:'D3', w1:'W1', m1:'M1', m3:'M3', m6:'M6'};
+
+const escapeHTML = (str) => {
+  if(!str) return '';
+  return str.replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
+};
+
+function getShortCode(name) {
+  if (!name) return '';
+  const words = name.trim().split(/\s+/);
+  if (words.length === 1) return words[0].substring(0, 3).toUpperCase();
+  return words.map(w => w[0]).join('').substring(0, 3).toUpperCase();
+}
+
+/* ========================
+   SHARE SOURCE CODE FEATURE
+======================== */
+function copySourceCode() {
+    const code = document.documentElement.outerHTML;
+    const tempInput = document.createElement('textarea');
+    tempInput.value = code;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    try {
+        document.execCommand('copy');
+        toast("App Source Code Copied to Clipboard! 🚀");
+    } catch (err) {
+        toast("Failed to copy code.");
+    }
+    document.body.removeChild(tempInput);
+}
+
+/* ========================
+   TUTORIAL LOGIC
+======================== */
+let currentTutSlide = 1;
+
+function openTutorial() {
+  currentTutSlide = 1;
+  updateTutorialUI();
+  document.getElementById('tutorialModal').classList.add('open');
+}
+
+function closeTutorial() {
+  document.getElementById('tutorialModal').classList.remove('open');
+  if (!settings.seenTutorial) {
+    settings.seenTutorial = true;
+    persist();
+  }
+}
+
+function nextTutorialSlide() {
+  if (currentTutSlide < 4) {
+    currentTutSlide++;
+    updateTutorialUI();
+  } else {
+    closeTutorial();
+  }
+}
+
+function updateTutorialUI() {
+  for (let i=1; i<=4; i++) {
+    document.getElementById(`tut-${i}`).classList.remove('active');
+    document.getElementById(`dot-${i}`).classList.remove('active');
+  }
+  document.getElementById(`tut-${currentTutSlide}`).classList.add('active');
+  document.getElementById(`dot-${currentTutSlide}`).classList.add('active');
+  
+  const nextBtn = document.getElementById('tutNextBtn');
+  if (currentTutSlide === 4) {
+    nextBtn.textContent = "शुरू करें 🚀";
+  } else {
+    nextBtn.textContent = "आगे ➔";
+  }
+}
+
+/* ========================
+   LEVEL LOGIC
+======================== */
+function getLevelInfo(days) {
+    if (days <= 10) return { name: 'Beginner', min: 0, max: 10, next: 'Intermediate' };
+    if (days <= 25) return { name: 'Intermediate', min: 10, max: 25, next: 'Expert' };
+    if (days <= 50) return { name: 'Expert', min: 25, max: 50, next: 'Memory Master' };
+    if (days <= 60) return { name: 'Memory Master', min: 50, max: 60, next: 'Pro' };
+    if (days <= 100) return { name: 'Pro', min: 60, max: 100, next: 'Max Level' };
+    return { name: 'Pro Elite', min: 100, max: days, next: 'Maxed' }; 
+}
+
+/* ========================
+   UTILS
+======================== */
+const today = () => {
+  const d = new Date(); 
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+function addDays(base, n){
+  const d = new Date(base + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+function fmtDate(ds){
+  const d = new Date(ds + 'T00:00:00');
+  return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+}
+function daysLeft(ds){
+  const diff = Math.round((new Date(ds+'T00:00:00') - new Date(today()+'T00:00:00'))/86400000);
+  if(diff===0) return 'Aaj (Today)';
+  if(diff===1) return '1 Din Baad';
+  if(diff>0)   return diff + ' Din Baad';
+  return Math.abs(diff) + ' Din Missed';
+}
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function persist(){
+  localStorage.setItem('rs_recalls',  JSON.stringify(recalls));
+  localStorage.setItem('rs_settings', JSON.stringify(settings));
+}
+function toast(msg){
+  document.getElementById('toastMsg').textContent = msg;
+  const el = document.getElementById('toast');
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2500);
+}
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function overlayClick(e,id){ if(e.target===document.getElementById(id)) closeModal(id); }
+
+function toggleNote(id) {
+  const noteEl = document.getElementById(`note-${id}`);
+  if (noteEl.style.display === 'block') {
+    noteEl.style.display = 'none';
+  } else {
+    noteEl.style.display = 'block';
+  }
+}
+
+/* ========================
+   NOTIFICATIONS API
+======================== */
+function requestNotificationPerm(){
+  if (!("Notification" in window)) { toast("Browser doesn't support notifications!"); return; }
+  Notification.requestPermission().then(perm => {
+    if(perm === 'granted') toast("Notifications ON ho gayi!"); else toast("Permission denied!");
+  });
+}
+
+function checkAlarms() {
+  if (Notification.permission !== 'granted') return;
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  const currTime = `${hh}:${mm}`;
+  const tDate = today();
+
+  if (currTime === settings.dailyTime && settings.lastNotified !== tDate) {
+    let pendingCount = 0;
+    recalls.forEach(r => { Object.values(r.schedule).forEach(s => { if (s.date <= tDate && !s.done) pendingCount++; }); });
+    if (pendingCount > 0) {
+      new Notification("Revision Scheduler", {
+        body: `Aapke paas ${pendingCount} topics revision ke liye pending hain! 📚`,
+        icon: "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%231A56DB'/><text x='50' y='65' font-size='40' fill='white' text-anchor='middle' font-family='sans-serif'>RS</text></svg>"
+      });
+    }
+    settings.lastNotified = tDate;
+    persist();
+  }
+}
+setInterval(checkAlarms, 60000);
+
+/* ========================
+   STREAK & FREEZE LOGIC
+======================== */
+function checkStreakOnLoad() {
+    const t = today();
+    const currentMonth = t.substring(0, 7);
+    
+    if (settings.lastFreezeMonth !== currentMonth) {
+        settings.freezes = 5;
+        settings.lastFreezeMonth = currentMonth;
+        persist();
+    }
+
+    let displayStreak = settings.streak || 0;
+    if (settings.lastDate) {
+        const diff = Math.floor((new Date(t) - new Date(settings.lastDate)) / 86400000);
+        if (diff > 1) {
+            const missed = diff - 1;
+            if (settings.freezes < missed) displayStreak = 0; 
+        }
+    }
+    document.getElementById('streakText').textContent = displayStreak;
+    
+    const lvl = getLevelInfo(settings.totalDays || 0);
+    document.getElementById('headerLevelBadge').textContent = lvl.name;
+}
+
+function updateStatsOnAction() {
+    const t = today();
+    const currentMonth = t.substring(0, 7);
+    if (settings.lastFreezeMonth !== currentMonth) { settings.freezes = 5; settings.lastFreezeMonth = currentMonth; }
+
+    if (settings.lastDate !== t) {
+        if (!settings.lastDate) {
+            settings.streak = 1; settings.totalDays = 1;
+        } else {
+            const diff = Math.floor((new Date(t) - new Date(settings.lastDate)) / 86400000);
+            if (diff === 1) {
+                settings.streak++;
+            } else if (diff > 1) {
+                const missedDays = diff - 1;
+                if (settings.freezes >= missedDays) {
+                    settings.freezes -= missedDays; settings.streak++; toast(`❄️ ${missedDays} Freeze used! Streak saved!`);
+                } else {
+                    settings.freezes = 0; settings.streak = 1; settings.penaltyUntil = addDays(t, 2); toast('😓 Streak broken! 2-Day Penalty.');
+                }
+            }
+        }
+        if (!settings.penaltyUntil || t > settings.penaltyUntil) settings.totalDays = (settings.totalDays || 0) + 1;
+        settings.lastDate = t;
+        persist();
+    }
+    checkStreakOnLoad();
+}
+
+function openStreakModal() {
+    const t = today();
+    const lvl = getLevelInfo(settings.totalDays || 0);
+    document.getElementById('gcLevelName').textContent = lvl.name;
+    
+    let displayStreak = settings.streak || 0;
+    if (settings.lastDate) {
+        const diff = Math.floor((new Date(t) - new Date(settings.lastDate)) / 86400000);
+        if (diff > 1 && settings.freezes < (diff - 1)) displayStreak = 0;
+    }
+    
+    document.getElementById('gcStreak').textContent = displayStreak;
+    document.getElementById('gcFreezes').textContent = `${settings.freezes || 0}/5`;
+    
+    const progPct = lvl.max > lvl.min ? Math.min(100, Math.max(0, ((settings.totalDays - lvl.min) / (lvl.max - lvl.min)) * 100)) : 100;
+    document.getElementById('gcProgText').innerHTML = `<span>${settings.totalDays || 0} / ${lvl.max} Days</span>`;
+    document.getElementById('gcNextLevel').textContent = lvl.next === 'Maxed' ? 'Max Level Reached' : `to ${lvl.next}`;
+    
+    setTimeout(() => { document.getElementById('gcProgFill').style.width = `${progPct}%`; }, 50);
+    
+    const penAlert = document.getElementById('gcPenaltyAlert');
+    if (settings.penaltyUntil && t <= settings.penaltyUntil) {
+        penAlert.style.display = 'block'; document.getElementById('gcPenaltyDate').textContent = fmtDate(settings.penaltyUntil);
+    } else { penAlert.style.display = 'none'; }
+    
+    document.getElementById('streakModal').classList.add('open');
+}
+
+/* ========================
+   SHARE (Spotify Wrapped Style)
+======================== */
+function openShareModal() {
+  const t = today();
+  const lvl = getLevelInfo(settings.totalDays || 0);
+  
+  let doneToday = 0;
+  recalls.forEach(r => Object.values(r.schedule).forEach(s => {
+    if(s.done && s.doneDate === t) doneToday++;
+  }));
+
+  document.getElementById('wcLevelVal').textContent = lvl.name;
+  document.getElementById('wcStreakVal').textContent = `${settings.streak || 0} Days`;
+  document.getElementById('wcDoneVal').textContent = doneToday;
+  
+  let title = "Unstoppable! 🚀";
+  if (doneToday > 10) title = "Beast Mode! 🐺";
+  else if (doneToday === 0) title = "Time to Hustle! ⏳";
+  document.getElementById('wcTitle').textContent = title;
+
+  document.getElementById('shareModal').classList.add('open');
+}
+
+function shareText() {
+  const lvl = getLevelInfo(settings.totalDays || 0).name;
+  const streak = settings.streak || 0;
+  const text = `I'm on a 🔥 ${streak}-Day Revision Streak! \nCurrent Level: 🌟 ${lvl}. \nTrying to be the best version of myself. \nJoin me on Revision Scheduler Pro! 🚀`;
+  
+  if (navigator.share) {
+    navigator.share({ title: 'My Revision Status', text: text }).catch(console.error);
+  } else {
+    navigator.clipboard.writeText(text);
+    toast("Status copied to clipboard!");
+  }
+}
+
+/* ========================
+   AMBIENT TIMER
+======================== */
+async function requestWakeLock() {
+  try { if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+}
+function releaseWakeLock() {
+  if (wakeLock !== null) { wakeLock.release().then(() => wakeLock = null); }
+}
+
+function openTimerModal(id, key, title) {
+  timerTargetId = id; timerTargetKey = key;
+  document.getElementById('ambientTopicTitle').textContent = title;
+  document.getElementById('timerSelectModal').classList.add('open');
+}
+
+function startAmbientTimer(mins) {
+  closeModal('timerSelectModal');
+  timerSeconds = mins * 60;
+  updateTimerUI();
+  
+  document.getElementById('ambientActions').classList.remove('show');
+  document.getElementById('ambientTimer').classList.add('active');
+  requestWakeLock();
+  
+  if (timerInterval) clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    updateTimerUI();
+    if (timerSeconds <= 0) finishTimer();
+  }, 1000);
+}
+
+function updateTimerUI() {
+  let m = Math.floor(timerSeconds / 60);
+  let s = timerSeconds % 60;
+  document.getElementById('ambientTime').textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function finishTimer() {
+  clearInterval(timerInterval);
+  document.getElementById('ambientTime').textContent = "00:00";
+  document.getElementById('ambientActions').classList.add('show');
+  releaseWakeLock();
+}
+
+function addAmbientMins(mins) {
+  timerSeconds = mins * 60;
+  document.getElementById('ambientActions').classList.remove('show');
+  requestWakeLock();
+  timerInterval = setInterval(() => {
+    timerSeconds--; updateTimerUI();
+    if (timerSeconds <= 0) finishTimer();
+  }, 1000);
+}
+
+function cancelTimer() {
+  clearInterval(timerInterval);
+  document.getElementById('ambientTimer').classList.remove('active');
+  releaseWakeLock();
+}
+
+function finishAmbientDone() {
+  cancelTimer();
+  markDone(timerTargetId, timerTargetKey);
+}
+
+/* ========================
+   UNIVERSAL DELETE TOPIC
+======================== */
+function triggerDelete(id) {
+  targetDeleteId = id;
+  document.getElementById('deleteTopicModal').classList.add('open');
+}
+
+function executeDeleteTopic() {
+  if(!targetDeleteId) return;
+  // This physically wipes the entire topic and ALL its schedules permanently
+  recalls = recalls.filter(r => r.id !== targetDeleteId);
+  persist(); 
+  closeModal('deleteTopicModal');
+  
+  // Force wipe the DOM lists to guarantee clean render
+  document.getElementById('todayList').innerHTML = '';
+  document.getElementById('upcomingList').innerHTML = '';
+  
+  // Refresh current screen explicitly
+  if(document.getElementById('homeScreen').classList.contains('active')) renderHome();
+  else if(document.getElementById('perfScreen').classList.contains('active')) renderPerf();
+  else if(document.getElementById('heatmapScreen').classList.contains('active')) renderHeatmap('all');
+  else if(document.getElementById('detailScreen').classList.contains('active')) go('homeScreen');
+  
+  toast('टॉपिक हमेशा के लिए डिलीट हो गया!');
+  targetDeleteId = null;
+}
+
+function triggerDeleteFromDetail() {
+  triggerDelete(currentId);
+}
+
+/* ========================
+   NAVIGATION
+======================== */
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(screen).classList.add('active');
+  if(screen==='homeScreen')    renderHome();
+  if(screen==='perfScreen')    renderPerf();
+  if(screen==='heatmapScreen') renderHeatmap('all');
+  if(screen==='settingsScreen')renderSettings();
+}
+function switchTab(tab){
+  ['today','upcoming'].forEach(t=>{
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-'+t+'-content').classList.toggle('active', t===tab);
+  });
+}
+
+function renderSubjectChips() {
+  const bar = document.getElementById('subjectFilterBar');
+  const subs = [...new Set(recalls.map(r => (r.subject||'').trim()).filter(Boolean))];
+  if (subs.length === 0) { bar.style.display = 'none'; return; }
+  if (activeSubjectFilter !== 'all' && !subs.includes(activeSubjectFilter)) activeSubjectFilter = 'all';
+
+  bar.style.display = 'flex';
+  let html = `<button class="chip ${activeSubjectFilter==='all'?'active':''}" onclick="setSubjectFilter('all')">ALL</button>`;
+  subs.forEach(s => { html += `<button class="chip ${activeSubjectFilter===s?'active':''}" onclick="setSubjectFilter('${escapeHTML(s)}')">${escapeHTML(getShortCode(s))}</button>`; });
+  bar.innerHTML = html;
+}
+
+function setSubjectFilter(sub) { activeSubjectFilter = sub; renderHome(); }
+
+/* ========================
+   RENDER HOME & EXAM MODE
+======================== */
+function renderHome(){
+  const t = today();
+  checkStreakOnLoad();
+
+  let inExamMode = false;
+  let examPhase = 0; 
+  const banner = document.getElementById('examBanner');
+  
+  if (settings.examDate) {
+    const diff = Math.ceil((new Date(settings.examDate) - new Date(t)) / 86400000);
+    if (diff > 0 && diff <= 5) {
+      inExamMode = true;
+      banner.style.display = 'block';
+      document.getElementById('examDaysSpan').textContent = diff;
+      examPhase = (diff === 5 || diff === 4) ? 1 : 2;
+    } else {
+      banner.style.display = 'none';
+    }
+  } else {
+    banner.style.display = 'none';
+  }
+
+  let globalToday = 0; let globalMissed = 0;
+  
+  recalls.forEach(r=>{
+    Object.entries(r.schedule).forEach(([k,s])=>{
+      s.missed = !s.done && s.date < t;
+      if (s.date === t && !s.done) globalToday++;
+      if (s.missed && !s.done) globalMissed++;
+    });
+  });
+  persist();
+
+  document.getElementById('todayPill').innerHTML  = `🎯 ${globalToday}`;
+  document.getElementById('missedPill').innerHTML = `😓 ${globalMissed}`;
+
+  renderSubjectChips();
+
+  const filteredRecalls = activeSubjectFilter === 'all' ? recalls : recalls.filter(r => (r.subject||'').trim() === activeSubjectFilter);
+
+  let todayItems = [];
+  let missedItems = [];
+
+  if (inExamMode) {
+    filteredRecalls.forEach(r => {
+      Object.entries(r.schedule).forEach(([k,s]) => {
+        if (!s.done) todayItems.push({r,k,s});
+      });
+    });
+    if (examPhase === 2) {
+      todayItems.sort((a,b) => new Date(a.s.date) - new Date(b.s.date));
+    }
+  } else {
+    filteredRecalls.forEach(r=>{
+      Object.entries(r.schedule).forEach(([k,s])=>{
+        if (s.date === t && !s.done) todayItems.push({r,k,s});
+        if (s.missed && !s.done) missedItems.push({r,k,s});
+      });
+    });
+  }
+
+  const tl = document.getElementById('todayList');
+  tl.innerHTML = '';
+  
+  if(!todayItems.length && !missedItems.length){
+    tl.innerHTML = emptyHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>', 'Sab Clear Hai!', 'Aaj ka koi revision pending nahi hai.');
+  } else {
+    if (inExamMode) {
+      todayItems.forEach(({r,k}) => tl.appendChild(makeCard(r,k, r.schedule[k].missed)));
+    } else {
+      missedItems.forEach(({r,k}) => tl.appendChild(makeCard(r,k,true)));
+      todayItems.forEach(({r,k}) => tl.appendChild(makeCard(r,k,false)));
+    }
+  }
+  renderUpcoming(filteredRecalls, inExamMode);
+}
+
+function makeCard(r, k, missed){
+  const s = r.schedule[k];
+  const total = Object.keys(r.schedule).length;
+  const done  = Object.values(r.schedule).filter(x=>x.done).length;
+  const isDone = s.done;
+
+  const div = document.createElement('div');
+  div.className = 'recall-card' + (missed?' missed':'') + (isDone?' done-card':'');
+  div.onclick = ()=>openDetail(r.id);
+  
+  const subTag = r.subject ? `<span class="sub-tag">${escapeHTML(getShortCode(r.subject))}</span>` : '';
+
+  let noteBtnHtml = '';
+  let noteContentHtml = '';
+  if (r.note && r.note.trim() !== '') {
+    noteBtnHtml = `
+      <button class="icon-action-btn btn-note" onclick="event.stopPropagation(); toggleNote('${r.id}')" title="Show Trick/Note">
+        <svg><use href="#icon-eye"></use></svg>
+      </button>
+    `;
+    noteContentHtml = `<div class="hidden-note" id="note-${r.id}">${escapeHTML(r.note).replace(/\n/g, '<br>')}</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="card-top-actions">
+      ${noteBtnHtml}
+      <button class="icon-action-btn btn-timer" onclick="event.stopPropagation(); openTimerModal('${r.id}','${k}', '${escapeHTML(r.title.replace(/'/g, "\\'"))}')">
+        <svg><use href="#icon-timer"></use></svg>
+      </button>
+    </div>
+    
+    <div class="card-title">${escapeHTML(r.title)}</div>
+    <div class="card-meta">Added: ${fmtDate(r.created)} ${subTag} ${missed?' &nbsp;·&nbsp; <span style="color:var(--coral);font-weight:700">Missed</span>':''}</div>
+    
+    ${noteContentHtml}
+
+    <div class="card-footer">
+      <div class="card-tags"><span class="itag itag-${k.split('_')[0]}">${LABELS[k.split('_')[0]] || k.toUpperCase().split('_')[0]}</span><span class="progress-badge">${done}/${total}</span></div>
+      ${isDone
+        ? `<button class="done-btn marked" onclick="event.stopPropagation();unmark('${r.id}','${k}')">Done ✓</button>`
+        : `<button class="done-btn" onclick="event.stopPropagation();markDone('${r.id}','${k}')">Mark Done</button>`
+      }
+    </div>`;
+  return div;
+}
+
+function renderUpcoming(filteredArray, inExamMode){
+  const ul = document.getElementById('upcomingList');
+  ul.innerHTML = '';
+  
+  if (inExamMode) {
+    ul.innerHTML = emptyHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>', 'Exam Mode Active', 'All upcoming tasks are moved to Today for rapid revision.');
+    return;
+  }
+
+  const t = today();
+  const groups = {Tomorrow:[],Week:[],Month:[],Later:[]};
+  filteredArray.forEach(r=>{
+    Object.entries(r.schedule).forEach(([k,s])=>{
+      if(s.done || s.date<=t) return;
+      const diff = Math.round((new Date(s.date+'T00:00:00')-new Date(t+'T00:00:00'))/86400000);
+      const entry = {r,k,s,diff};
+      if(diff===1)       groups.Tomorrow.push(entry);
+      else if(diff<=7)   groups.Week.push(entry);
+      else if(diff<=31)  groups.Month.push(entry);
+      else               groups.Later.push(entry);
+    });
+  });
+
+  let any = false;
+  Object.entries(groups).forEach(([name,items])=>{
+    if(!items.length) return;
+    any = true;
+    const sec = document.createElement('div');
+    sec.className = 'upcoming-section';
+    sec.innerHTML = `<div class="upcoming-hdr"><div class="line"></div>${name} <span class="upcoming-badge">${items.length}</span><div class="line"></div></div>`;
+    items.sort((a,b)=>a.diff-b.diff).forEach(({r,k,s})=>{
+      const c = document.createElement('div');
+      c.className = 'recall-card'; c.style.borderLeftColor = 'var(--blue-mid)';
+      c.onclick = ()=>openDetail(r.id);
+      const subTag = r.subject ? `<span class="sub-tag">${escapeHTML(getShortCode(r.subject))}</span>` : '';
+      c.innerHTML = `
+        <div class="card-title" style="padding-right:0;">${escapeHTML(r.title)}</div>
+        <div class="card-meta">Added: ${fmtDate(r.created)} ${subTag}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:10px">
+          <span class="itag itag-${k.split('_')[0]}">${LABELS[k.split('_')[0]] || k.toUpperCase().split('_')[0]}</span>
+          <span style="font-size:.8rem;color:var(--muted);font-weight:600">${fmtDate(s.date)}</span>
+        </div>`;
+      sec.appendChild(c);
+    });
+    ul.appendChild(sec);
+  });
+  if(!any) ul.innerHTML = emptyHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>', 'No Future Plans', 'Aage ka koi schedule fix nahi hai.');
+}
+
+/* ========================
+   CONFIDENCE LOGIC (3 Buttons: Hard, Mod, Easy)
+======================== */
+function markDone(id,k){
+  pendingRatingId = id;
+  pendingRatingKey = k;
+  document.getElementById('confidenceModal').classList.add('open');
+}
+
+function submitConfidence(rating) {
+  if(!pendingRatingId || !pendingRatingKey) return;
+  const r = recalls.find(x=>x.id===pendingRatingId);
+  if(!r) return;
+  
+  const k = pendingRatingKey;
+  r.schedule[k].done = true; 
+  r.schedule[k].missed = false;
+  r.schedule[k].doneDate = today();
+
+  const t = today();
+
+  // Clear all pending (future) schedules for this topic to apply new strictly
+  Object.keys(r.schedule).forEach(key => {
+    if (!r.schedule[key].done && key !== k) {
+      delete r.schedule[key];
+    }
+  });
+
+  if (rating === 'hard') {
+    r.schedule['d1_' + Date.now()] = {date: addDays(t, 1), done: false, missed: false};
+    r.schedule['d2_' + Date.now()] = {date: addDays(t, 2), done: false, missed: false};
+    r.schedule['d3_' + Date.now()] = {date: addDays(t, 3), done: false, missed: false};
+  } else if (rating === 'moderate') {
+    r.schedule['d1_' + Date.now()] = {date: addDays(t, 1), done: false, missed: false};
+    r.schedule['w1_' + Date.now()] = {date: addDays(t, 7), done: false, missed: false};
+    r.schedule['m1_' + Date.now()] = {date: addDays(t, 30), done: false, missed: false};
+    r.schedule['m3_' + Date.now()] = {date: addDays(t, 91), done: false, missed: false};
+    r.schedule['m6_' + Date.now()] = {date: addDays(t, 183), done: false, missed: false};
+  } else if (rating === 'easy') {
+    // End revision. None added.
+  }
+
+  updateStatsOnAction();
+  persist();
+  closeModal('confidenceModal'); 
+  go('homeScreen'); // Automatically close and go to home page
+  
+  pendingRatingId = null; pendingRatingKey = null;
+  toast('Awesome! Revision Done.');
+}
+
+function unmark(id,k){
+  const r = recalls.find(x=>x.id===id);
+  if(!r) return;
+  r.schedule[k].done = false; r.schedule[k].doneDate = null; persist(); renderHome();
+}
+
+/* ========================
+   ADD RECALL
+======================== */
+function openAdd(){
+  document.getElementById('addTitle').value = '';
+  document.getElementById('addSubject').value = activeSubjectFilter !== 'all' ? activeSubjectFilter : '';
+  document.getElementById('addNote').value = '';
+  document.getElementById('addLink').value = '';
+  activeSched = {cu:true,d1:true,w1:true,m1:true,m3:true,m6:true};
+  Object.keys(activeSched).forEach(k=>{
+    let btn = document.getElementById('tog-'+k);
+    if(btn) btn.className='toggle on';
+  });
+  document.getElementById('addOverlay').classList.add('open');
+}
+
+function toggleSched(k,btn){
+  activeSched[k] = !activeSched[k];
+  btn.className = 'toggle' + (activeSched[k]?' on':'');
+}
+
+function saveRecall(){
+  const title = document.getElementById('addTitle').value.trim();
+  if(!title){ toast('Title likhna zaruri hai!'); return; }
+  
+  const noteContent = document.getElementById('addNote').value.trim();
+  if (noteContent.split(/\s+/).length > 100) {
+    toast('Note max 100 words ka hona chahiye!'); return;
+  }
+
+  const subject = document.getElementById('addSubject').value.trim();
+  const t = today(); const schedule = {};
+  Object.entries(activeSched).forEach(([k,on])=>{
+    if(on) schedule[k] = {date:addDays(t,DAYS[k]), done:false, missed:false};
+  });
+  if(!Object.keys(schedule).length){ toast('Koi toh schedule select karo!'); return; }
+  
+  recalls.unshift({ id:genId(), title, subject, note:noteContent, link:document.getElementById('addLink').value.trim(), created:t, schedule });
+  persist(); document.getElementById('addOverlay').classList.remove('open');
+  
+  if (activeSubjectFilter !== 'all' && subject !== activeSubjectFilter) { activeSubjectFilter = 'all'; }
+  renderHome(); toast('Topic Scheduled Successfully!');
+}
+
+/* ========================
+   DETAIL & EDIT DATE
+======================== */
+function openDetail(id){
+  currentId = id; const r = recalls.find(x=>x.id===id);
+  if(!r) return; const t = today();
+  
+  const sorted = Object.entries(r.schedule).sort((a,b)=>new Date(a[1].date)-new Date(b[1].date));
+  let rows = sorted.map(([k,s])=>{
+    const isToday  = s.date===t;
+    const isMissed = s.date<t && !s.done;
+    const iCls = s.done?'icon-success':isMissed?'icon-danger':isToday?'icon-primary':'icon-muted';
+    const iTxt = s.done?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg> Done'
+               :isMissed?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg> Missed'
+               :isToday?'🎯 Today':'⏳ Pending';
+
+    const displayTag = LABELS[k.split('_')[0]] || k.toUpperCase().split('_')[0] || 'REV';
+
+    return `<div class="sched-item">
+      <div class="sched-item-left">
+        <span class="itag itag-${k.split('_')[0]}" style="min-width:40px;text-align:center">${displayTag}</span>
+        <div class="sched-date-edit-wrap">
+          <div>
+             <div class="sched-date-txt" onclick="document.getElementById('dateEdit-${k}').showPicker()">${fmtDate(s.date)} <svg class="edit-icon-tiny"><use href="#icon-edit"></use></svg></div>
+             <input type="date" class="hidden-date-picker" id="dateEdit-${k}" value="${s.date}" onchange="updateDate('${r.id}','${k}',this.value)">
+             <div class="sched-days-txt">${isToday?'Aaj hi revise karein':daysLeft(s.date)}</div>
+          </div>
+        </div>
+      </div>
+      <span class="sched-icon ${iCls}">${iTxt}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-h">${escapeHTML(r.title)}</div>
+    ${r.note ? `<div class="detail-note">${escapeHTML(r.note).replace(/\n/g, '<br>')}</div>` : ''}
+    ${r.link ? `<a href="${escapeHTML(r.link)}" target="_blank" class="detail-link"><svg class="edit-icon-tiny" style="color:inherit;"><use href="#icon-link"></use></svg> Link Kholein</a>` : ''}
+    <div class="sched-card">
+      <div class="sched-card-hdr"><span class="sched-card-title">Schedule List</span><span class="sched-card-date">Added on ${fmtDate(r.created)}</span></div>
+      ${rows}
+    </div>`;
+  go('detailScreen');
+}
+
+function updateDate(rId, key, newDate){
+  if(!newDate) return;
+  const r = recalls.find(x=>x.id===rId);
+  if(r && r.schedule[key]){
+     r.schedule[key].date = newDate;
+     r.schedule[key].missed = !r.schedule[key].done && newDate < today();
+     persist(); openDetail(rId); toast('Date update ho gayi!');
+  }
+}
+
+/* ========================
+   PERFORMANCE & HEATMAP
+======================== */
+function renderPerf(){
+  const all = recalls.flatMap(r=>Object.values(r.schedule));
+  const total = all.length; const done = all.filter(s=>s.done).length;
+  const miss = all.filter(s=>s.missed&&!s.done).length; const pend = total-done-miss;
+  const pct = total>0 ? Math.round((done/total)*100) : 100;
+
+  document.getElementById('perfPct').textContent = pct+'%';
+  document.getElementById('pTotal').textContent  = total;
+  document.getElementById('pDone').textContent   = done;
+  document.getElementById('pPend').textContent   = pend;
+  document.getElementById('pMiss').textContent   = miss;
+
+  const grid = document.getElementById('intGrid'); grid.innerHTML = '';
+  // Show base targets logic
+  ['cu','d1','w1','m1','m3','m6'].forEach(k=>{
+    const items = recalls.map(r=> {
+        let f = Object.keys(r.schedule).find(x => x.startsWith(k));
+        return f ? r.schedule[f] : null;
+    }).filter(Boolean);
+    const d = items.filter(s=>s.done).length; const m = items.filter(s=>s.missed&&!s.done).length;
+    const p = items.length-d-m; const p2= items.length>0 ? Math.round((d/items.length)*100) : 0;
+    
+    if(items.length > 0) {
+        const card = document.createElement('div'); card.className = 'int-card';
+        card.innerHTML = `<div class="int-card-lbl">${LABELS[k]} Target</div>
+          <div class="int-stat"><span class="ist-l">Done</span><span class="ist-v g">${d}</span></div>
+          <div class="int-stat"><span class="ist-l">Pend</span><span class="ist-v a">${p}</span></div>
+          <div class="int-stat"><span class="ist-l">Miss</span><span class="ist-v r">${m}</span></div>
+          <div class="int-bar"><div class="int-bar-fill" style="width:${p2}%"></div></div>`;
+        grid.appendChild(card);
+    }
+  });
+}
+
+function renderHeatmap(filter){
+  const actMap = {};
+  recalls.forEach(r=>{
+    Object.entries(r.schedule).forEach(([k,s])=>{
+      if(filter!=='all' && !k.startsWith(filter)) return;
+      if(s.done && s.doneDate) actMap[s.doneDate] = (actMap[s.doneDate]||0)+1;
+    });
+  });
+  const maxV = Math.max(...Object.values(actMap),1);
+  const grid = document.getElementById('hmapGrid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d=>{
+    const h = document.createElement('div'); h.className = 'hday-hdr'; h.textContent = d; grid.appendChild(h);
+  });
+  const end = new Date(); const start = new Date(); start.setDate(end.getDate()-69);
+  for(let i=0;i<start.getDay();i++){ const b = document.createElement('div'); b.className='hcell'; b.style.opacity='0'; grid.appendChild(b); }
+  for(let d=new Date(start);d<=end;d.setDate(d.getDate()+1)){
+    const ds = d.toISOString().split('T')[0]; const v = actMap[ds]||0;
+    const lvl = v===0 ? 0 : Math.min(5,Math.ceil((v/maxV)*5));
+    const cell = document.createElement('div'); cell.className = `hcell h${lvl}`; cell.title = `${ds}: ${v} completed`;
+    const sp = document.createElement('span'); sp.textContent = d.getDate();
+    cell.appendChild(sp); grid.appendChild(cell);
+  }
+}
+function hmapFilter(filter,btn){
+  document.querySelectorAll('.hmap-fbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active'); renderHeatmap(filter);
+}
+
+/* ========================
+   SETTINGS & EXPORT
+======================== */
+function renderSettings(){ 
+  document.getElementById('dailyTimeInput').value = settings.dailyTime || '09:00'; 
+  document.getElementById('examDateInput').value = settings.examDate || ''; 
+}
+function saveDailyTime(val){ settings.dailyTime = val; persist(); toast('Reminder saved!'); }
+function saveExamDate(val){ settings.examDate = val; persist(); toast('Exam Date Saved!'); renderHome(); }
+function sendFeedback() {
+  const f = document.getElementById('feedbackInput');
+  if(!f.value.trim()){ toast('Pehle apni salah likhein!'); return; }
+  toast('Advice sent! Thank you ❤️'); f.value = '';
+}
+function openClearConfirm(){ document.getElementById('clearModal').classList.add('open'); }
+function clearAll(){ recalls=[]; settings={"dailyTime":"09:00","streak":0,"lastDate":"","totalDays":0,"freezes":5,"lastFreezeMonth":"","penaltyUntil":"","examDate":"","seenTutorial":true}; persist(); closeModal('clearModal'); go('homeScreen'); toast('Sare topics delete ho gaye.'); }
+function doExport(){
+  const b=new Blob([JSON.stringify(recalls,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='revision_backup.json'; a.click(); toast('Data Exported!');
+}
+
+/* ========================
+   SEARCH
+======================== */
+function openSearch(){
+  go('searchScreen');
+  document.getElementById('searchContent').innerHTML = emptyHTML('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>','Search','Topic ka naam type karein');
+  setTimeout(()=>document.getElementById('searchInput').focus(), 200);
+}
+function doSearch(q){
+  const sc = document.getElementById('searchContent');
+  if(!q.trim()){ sc.innerHTML = ''; return; }
+  const found = recalls.filter(r=>r.title.toLowerCase().includes(q.toLowerCase())||(r.note&&r.note.toLowerCase().includes(q.toLowerCase())));
+  if(!found.length){ sc.innerHTML = emptyHTML('0','Kuch nahi mila','Spelling check karein'); return; }
+  sc.innerHTML = '';
+  found.forEach(r=>{
+    const c = document.createElement('div');
+    c.className = 'recall-card'; c.style.borderLeftColor = 'var(--blue)'; c.onclick = ()=>openDetail(r.id);
+    c.innerHTML = `<div class="card-title">${escapeHTML(r.title)}</div><div class="card-meta">Added: ${fmtDate(r.created)}</div>`;
+    sc.appendChild(c);
+  });
+}
+
+/* INIT */
+renderHome();
+if(Notification.permission === 'granted') checkAlarms();
+
+// Show tutorial on first load
+if (!settings.seenTutorial) {
+  setTimeout(openTutorial, 500);
+}
+</script>
+</body>
+</html>
